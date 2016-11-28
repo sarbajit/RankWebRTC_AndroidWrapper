@@ -12,6 +12,7 @@ import android.widget.RelativeLayout;
 
 import com.intel.webrtc.base.ActionCallback;
 import com.intel.webrtc.base.MediaCodec;
+import com.intel.webrtc.base.RemoteScreenStream;
 import com.intel.webrtc.base.RemoteStream;
 import com.intel.webrtc.base.WoogeenException;
 import com.intel.webrtc.base.WoogeenIllegalArgumentException;
@@ -151,6 +152,10 @@ class RoomHandler extends Handler {
 
         Log.e("createView", "remoteStreamId = " + remoteStream.getId() + ", from " + remoteStream.getRemoteUserId());
 
+        if (remoteStream instanceof RemoteScreenStream) {
+            Log.e("createView", ">>>>>>>>>>>>>>>>>>>>>> 5");
+        }
+
         WebRTCProperties.conferenceActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -166,6 +171,9 @@ class RoomHandler extends Handler {
                     remoteStream.attach(WebRTCProperties.remoteStreamRenderer);
 
                     Log.e("createview",WebRTCProperties.remoteViewContainer.getChildCount()+"");
+                    for (int i=0; i<WebRTCProperties.remoteViewContainer.getChildCount(); i++) {
+                        Log.e("Child", WebRTCProperties.remoteViewContainer.getChildAt(i).getClass()+"");
+                    }
 
                 } catch (WoogeenIllegalArgumentException e) {
                     e.printStackTrace();
@@ -205,11 +213,16 @@ class RoomHandler extends Handler {
             }
             case WebRTCProperties.MSG_SUBSCRIBE: {
 
+
                 final SubscribeOptions option = new SubscribeOptions();
 
                 option.setVideoCodec(MediaCodec.VideoCodec.VP8);
 
                 RemoteStream remoteStream = (RemoteStream) msg.obj;
+
+                if (remoteStream instanceof RemoteScreenStream) {
+                    Log.e("subscribe", ">>>>>>>>>>>>>>>>>>>>>> 2");
+                }
 
                 Log.e("subscribe", "new stream :" + remoteStream.getRemoteUserId());
 
@@ -222,12 +235,19 @@ class RoomHandler extends Handler {
                     break;
                 }
 
+                if (remoteStream instanceof RemoteScreenStream) {
+                    Log.e("subscribe", ">>>>>>>>>>>>>>>>>>>>>> 3");
+                }
+
                 WebRTCProperties.mRoom.subscribe(remoteStream, option,
                         new ActionCallback<RemoteStream>() {
 
                             @Override
                             public void onSuccess(final RemoteStream remoteStream) {
 
+                                if (remoteStream instanceof RemoteScreenStream) {
+                                    Log.e("subscribe", ">>>>>>>>>>>>>>>>>>>>>> 4");
+                                }
 
                                 WebRTCProperties.subscribedStreams.add(remoteStream.getId());
 
@@ -265,6 +285,10 @@ class RoomHandler extends Handler {
                             }
 
                         });
+                if (remoteStream instanceof RemoteScreenStream) {
+                    Log.e("subscribe", ">>>>>>>>>>>>>>>>>>>>>> 6");
+                }
+
                 break;
             }
             case WebRTCProperties.MSG_UNSUBSCRIBE:

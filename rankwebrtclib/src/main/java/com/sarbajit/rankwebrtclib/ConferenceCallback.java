@@ -7,7 +7,6 @@ import com.intel.webrtc.base.RemoteCameraStream;
 import com.intel.webrtc.base.RemoteScreenStream;
 import com.intel.webrtc.base.RemoteStream;
 import com.intel.webrtc.conference.ConferenceClient;
-import com.intel.webrtc.conference.RemoteMixedStream;
 import com.intel.webrtc.conference.User;
 
 /**
@@ -43,6 +42,11 @@ public class ConferenceCallback implements ConferenceClient.ConferenceClientObse
 
         if (remoteStream instanceof RemoteCameraStream)
             return;
+
+        else if (remoteStream instanceof RemoteScreenStream) {
+            Log.e("on stream added", ">>>>>>>>>>>>>>>>>>>>>> 1");
+            return;
+        }
         Log.e("on stream added", "new stream added");
         Message msg = new Message();
         msg.what = WebRTCProperties.MSG_SUBSCRIBE;
@@ -52,9 +56,9 @@ public class ConferenceCallback implements ConferenceClient.ConferenceClientObse
 
     @Override
     public void onStreamRemoved(RemoteStream remoteStream) {
-        if (remoteStream instanceof RemoteScreenStream || remoteStream instanceof RemoteMixedStream) {
+        /*if (remoteStream instanceof RemoteScreenStream || remoteStream instanceof RemoteMixedStream) {
             return;
-        }
+        }*/
 
         Message msg = new Message();
         msg.what = WebRTCProperties.MSG_UNSUBSCRIBE;
@@ -64,13 +68,14 @@ public class ConferenceCallback implements ConferenceClient.ConferenceClientObse
 
     @Override
     public void onUserJoined(User user) {
-        Log.e("conference callback", "new user :" + user.getId());
-
+        if (WebRTCProperties.conferenceListener != null)
+            WebRTCProperties.conferenceListener.onUserJoined(user);
     }
 
     @Override
     public void onUserLeft(User user) {
-        Log.e("conference callback", "left user :"+user.getId());
+        if (WebRTCProperties.conferenceListener != null)
+            WebRTCProperties.conferenceListener.onUserLeft(user);
     }
 
 

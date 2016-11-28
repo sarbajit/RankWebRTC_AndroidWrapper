@@ -40,7 +40,7 @@ class WebRTCProperties {
     static RoomHandler roomHandler;
     static ConferenceClient mRoom;
     static ConferenceCallback conferenceCallback;
-
+    static ConferenceListener conferenceListener;
     static HandlerThread roomThread;
 
 

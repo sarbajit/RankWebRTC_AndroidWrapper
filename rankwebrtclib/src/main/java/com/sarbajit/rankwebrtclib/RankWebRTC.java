@@ -22,9 +22,18 @@ import com.intel.webrtc.conference.User;
 import com.rank.socketlib.SocketLibrary;
 import com.rank.socketlib.SocketListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.webrtc.EglBase;
 import org.webrtc.PeerConnection;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +68,8 @@ public class RankWebRTC implements RoomHandlerCallback {
 
     private JoinCallback joinCallback;
     private LeaveCallback leaveCallback;
+    private ParticipantCallback participantCallback;
+    StringBuilder result;
 
     //library and webrtc initialization
 
@@ -218,6 +229,15 @@ public class RankWebRTC implements RoomHandlerCallback {
         audioManager.setSpeakerphoneOn(true);
     }
 
+    /**
+     * Informs RankWebRTC library about the activity where conference callbacks,
+     * e.g. notifications of userJoin and userLeft will be received
+     * @param conferenceListener
+     */
+    public void setConferenceListener(ConferenceListener conferenceListener) {
+        WebRTCProperties.conferenceListener = conferenceListener;
+    }
+
     void init() {
         WebRTCProperties.roomThread = new HandlerThread("Room Thread");
         WebRTCProperties.roomThread.start();
@@ -308,6 +328,70 @@ public class RankWebRTC implements RoomHandlerCallback {
 
             }
         }
+
+    }
+
+
+    /**
+     * Get the participant list of a specified room
+     * @param roomId
+     * @param participantCallback Success/Failure callback for list fetching. Success callback returns the array of participant names
+     */
+    public void getParticipantList(final String roomId, final ParticipantCallback participantCallback){
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String basicServer = getServerURL()+":"+getServerPort()+"/";
+                    URL url = new URL(basicServer + "getUsers/"+roomId);
+
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setRequestProperty("Accept", "application/json");
+
+                    if (conn.getResponseCode() != 200) {
+                        participantCallback.failure(new RankWebRTCException("Failed : HTTP error code : "
+                                + conn.getResponseCode()));
+                    }
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                            (conn.getInputStream())));
+
+                    String output;
+                    result = new StringBuilder();
+//                    System.out.println("Output from Server .... \n");
+                    while ((output = br.readLine()) != null) {
+//                        System.out.println(output);
+                        result.append(output);
+                    }
+
+                    conn.disconnect();
+
+                    JSONArray jsonArray = new JSONArray(result.toString());
+                    ArrayList<String> arrayList = new ArrayList<String>();
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        arrayList.add(jsonObject.getString("name"));
+                    }
+
+                    participantCallback.success(arrayList);
+
+                } catch (MalformedURLException e) {
+
+                    e.printStackTrace();
+
+                } catch (IOException e) {
+
+                    e.printStackTrace();
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
 
     }
 
@@ -422,6 +506,26 @@ public class RankWebRTC implements RoomHandlerCallback {
         WebRTCProperties.localStream.enableAudio();
     }
 
+
+    //mute speaker
+
+    /**
+     * Used to mute speaker
+     */
+    public void muteSpeaker() {
+        WebRTCProperties.subscribedStream.disableAudio();
+    }
+
+
+    //unmute speaker
+
+    /**
+     * Used to unmute speaker
+     */
+    public void unmuteSpeaker() {
+        WebRTCProperties.subscribedStream.enableAudio();
+    }
+
     //interfaces
 
     //join conference callback
@@ -453,5 +557,13 @@ public class RankWebRTC implements RoomHandlerCallback {
     public interface LeaveCallback {
         void leaveSuccess();
         void leaveFailure(RankWebRTCException e);
+    }
+
+
+    //participantlist callback
+
+    public interface ParticipantCallback {
+        void success(ArrayList<String> participantList);
+        void failure(RankWebRTCException e);
     }
 }
