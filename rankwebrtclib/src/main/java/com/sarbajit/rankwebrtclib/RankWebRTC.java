@@ -205,6 +205,67 @@ public class RankWebRTC implements RoomHandlerCallback {
         return WebRTCProperties.socket;
     }
 
+
+    //message sending through socket
+
+    /**
+     * Communication through socket
+     * @param receiver To whom the message will be sent
+     * @param message The message to be sent
+     */
+    public void send(String receiver, String message) {
+
+        JSONObject payLoad = new JSONObject();
+        try {
+            payLoad.put("customer", receiver);
+            payLoad.put("message", message);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        WebRTCProperties.socket.emit("send message", payLoad);
+
+    }
+
+    //private chat
+
+    /**
+     * Sending private chat message
+     * @param receiver To whom the message will be sent
+     * @param message The message to be sent
+     */
+    public void sendPrivateChat(String receiver, String message) {
+
+        JSONObject payLoad = new JSONObject();
+        try {
+            payLoad.put("customer", receiver);
+            payLoad.put("message", message);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        WebRTCProperties.socket.emit("private-chat", payLoad);
+
+    }
+
+    //group chat
+
+    /**
+     * Sending group chat message to a list of users
+     * @param receivers List of receivers to whom the message will be sent
+     * @param message The message to be sent
+     */
+    public void sendGroupChat(ArrayList<String> receivers, String message) {
+        JSONObject payLoad = new JSONObject();
+        try {
+            payLoad.put("receivers", receivers);
+            payLoad.put("message", message);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        WebRTCProperties.socket.emit("group-chat", payLoad);
+    }
+
     //socket disconnection
 
     /**
